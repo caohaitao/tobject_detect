@@ -11,6 +11,7 @@ import shutil
 import cv2
 import numpy as np
 import torch
+from test_global import *
 
 class classic_data:
     def __init__(self,index,color,label):
@@ -30,10 +31,6 @@ classics ={
     3:classic_data(3,(240,240,120),"yellow"),
     4:classic_data(4,(50,240,240),"Cyan")
 }
-
-img_width = 416
-img_height = 416
-
 
 def compute_iou(rec1, rec2):
     """
@@ -78,24 +75,24 @@ def iou_check(classic,rect,rects):
 def create_simple_rect(disturb_paths,folder_path,label_folder,index):
     res = []
     obj_nums = random.randint(1,4)
-    use_disturb_index = random.randint(0,len(disturb_paths)-1)
+    # use_disturb_index = random.randint(0,len(disturb_paths)-1)
     # img = Image.open(disturb_paths[use_disturb_index])
     # if img.mode == 'L':
     #     img = img.convert('RGB')
     # img = img.resize((img_width,img_height))
-    img = Image.new('RGB', (img_width, img_height), (255, 255, 255))
+    img = Image.new('RGB', (IMG_WIDTH, IMG_HEIGHT), (255, 255, 255))
     draw = ImageDraw.Draw(img)
     while True:
-        pos_x = random.randint(60,360)
-        pos_y = random.randint(60,360)
-        rect_width = random.randint(32,128)
-        rect_height = random.randint(32,128)
+        pos_x = random.randint(CENTER_POS_MIN,CENTER_POS_MAX)
+        pos_y = random.randint(CENTER_POS_MIN,CENTER_POS_MAX)
+        rect_width = random.randint(RECT_LENGTH_MIN,RECT_LENGTH_MAX)
+        rect_height = random.randint(RECT_LENGTH_MIN,RECT_LENGTH_MAX)
         type = random.randint(0,4)
 
         min_x = pos_x
         min_y = pos_y
-        max_x = int(min(pos_x + rect_width,img_width))
-        max_y = int(min(pos_y + rect_height,img_width))
+        max_x = int(min(pos_x + rect_width,IMG_WIDTH))
+        max_y = int(min(pos_y + rect_height,IMG_HEIGHT))
 
         ld = label_data()
         ld.classic = type
@@ -170,11 +167,11 @@ if __name__=='__main__':
     if not os.path.exists(label_foler):
         os.makedirs(label_foler)
 
-    disturb_dir = r'E:\tensorflow_datas\coco\train2014\train2014'
-    disturb_paths = [os.path.join(disturb_dir, img) for img in os.listdir(disturb_dir)]
+    # disturb_dir = r'E:\tensorflow_datas\coco\train2014\train2014'
+    # disturb_paths = [os.path.join(disturb_dir, img) for img in os.listdir(disturb_dir)]
 
-    for i in range(3000):
-        create_simple_rect(disturb_paths,img_foler,label_foler,i)
+    for i in range(2000):
+        create_simple_rect(None,img_foler,label_foler,i)
 
     # data_show(img_foler,label_foler)
 

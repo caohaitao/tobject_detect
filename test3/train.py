@@ -10,16 +10,17 @@ from dataset import Detection1DataSet
 from log import *
 
 
-pkl_name = "detection2.pkl"
+pkl_name = "detection3.pkl"
 EPOCH = 32
 BATCH_SIZE = 8
-default_lr = 0.0001
+default_lr = 0.001
 
 
-# 输出的通道数目，分别是∆x,∆y,w,h,c+6个分类（0是没有物体，其他分类是分类标签+1）
-out_channel = 5+6
+# 输出的通道数目，分别是∆x,∆y,w,h,c+5个分类
+out_channel = 5+5
 
-cfg = [64, 'M', 128,128, 'M', 256,256,256, 'M', 512,512,512, 'M', 1024,1024,1024, 'M',512]
+# cfg = [64, 'M', 128,128, 'M', 256,256,256, 'M', 512,512,512, 'M', 1024,1024,1024, 'M',512]
+cfg = [64, 'M', 128,128, 'M', 256,256,256, 'M', 512,512,512, 'M',256]
 
 
 class detection1(nn.Module):
@@ -79,14 +80,14 @@ def val(model,dataloader):
     loss_func3 = torch.nn.CrossEntropyLoss().cuda()
     for ii, (data, label0, label1,label2) in enumerate(dataloader):
         input = Variable(data).cuda()
-        target0 = Variable(label0).cuda()
-        target1 = Variable(label1).cuda()
-        target2 = Variable(label2).cuda()
+        target0 = Variable(label0)
+        target1 = Variable(label1)
+        target2 = Variable(label2)
 
         score = model(input)
-        scores = torch.split(score, [4,1,6], 2)
-        loss1 = loss_func1(scores[0], target0, target1)
-        loss2 = loss_func2(scores[1], target1)
+        scores = torch.split(score, [4,1,5], 2)
+        loss1 = loss_func1(scores[0], target0.cuda(), target1.cuda())
+        loss2 = loss_func2(scores[1], target1.cuda())
 
         t1 = target1.reshape(target1.size()[0] * target1.size()[1])
 
@@ -95,10 +96,10 @@ def val(model,dataloader):
 
         indicates = torch.nonzero(t1 == 1.0).view(-1)
 
-        scores3 = torch.index_select(scores3, 0, indicates)
+        scores3 = torch.index_select(scores3, 0, indicates.cuda())
         t2 = torch.index_select(t2, 0, indicates)
 
-        loss3 = loss_func3(scores3, t2)
+        loss3 = loss_func3(scores3, t2.cuda())
 
         loss1 = 5 * loss1
         loss2 = 5 * loss2
@@ -189,15 +190,15 @@ def train():
 
         for ii,(data,label0,label1,label2) in enumerate(train_dataloader):
             input = Variable(data).cuda()
-            target0 = Variable(label0).cuda()
-            target1 = Variable(label1).cuda()
-            target2 = Variable(label2).cuda()
+            target0 = Variable(label0)
+            target1 = Variable(label1)
+            target2 = Variable(label2)
 
             optimizer.zero_grad()
             score = cnn(input)
-            scores = torch.split(score,[4,1,6],2)
-            loss1 = loss_func1(scores[0],target0,target1)
-            loss2 = loss_func2(scores[1],target1)
+            scores = torch.split(score,[4,1,5],2)
+            loss1 = loss_func1(scores[0],target0.cuda(),target1.cuda())
+            loss2 = loss_func2(scores[1],target1.cuda())
 
             t1 = target1.reshape(target1.size()[0]*target1.size()[1])
 
@@ -206,23 +207,23 @@ def train():
 
             indicates = torch.nonzero(t1==1.0).view(-1)
 
-            scores3 = torch.index_select(scores3, 0, indicates)
+            scores3 = torch.index_select(scores3, 0, indicates.cuda())
             t2 = torch.index_select(t2, 0, indicates)
 
-            loss3 = loss_func3(scores3,t2)
+            loss3 = loss_func3(scores3,t2.cuda())
 
             loss1 = 5*loss1
             loss2 = 5*loss2
             loss = loss1 + loss2 + loss3
-            if ii%100==0 and ii!=0:
-                print("epoch(%d) step(%d) loss1(%0.6f) loss2(%0.6f) loss3(%0.6f) loss(%0.6f)"%(
-                    epoch,
-                    ii,
-                    loss_meter1.value()[0],
-                    loss_meter2.value()[0],
-                    loss_meter3.value()[0],
-                    loss_meter.value()[0]
-                ))
+            # if ii%100==0 and ii!=0:
+            #     print("epoch(%d) step(%d) loss1(%0.6f) loss2(%0.6f) loss3(%0.6f) loss(%0.6f)"%(
+            #         epoch,
+            #         ii,
+            #         loss_meter1.value()[0],
+            #         loss_meter2.value()[0],
+            #         loss_meter3.value()[0],
+            #         loss_meter.value()[0]
+            #     ))
 
             loss.backward()
             optimizer.step()
@@ -233,8 +234,8 @@ def train():
             loss_meter3.add(loss3.detach().cpu().numpy())
 
         torch.save(cnn,pkl_name)
-        logger.info("save model(%s) success" % pkl_name)
-
+        # logger.info("save model(%s) success" % pkl_name)
+        torch.cuda.empty_cache()
         val_loss,val_loss1,val_loss2,val_loss3 = val(cnn,val_dataloader)
 
         logger.info("epoch(%d) train_loss(%0.6f,%0.6f,%0.6f,%0.6f) val_loss(%0.6f,%0.6f,%0.6f,%0.6f)"%

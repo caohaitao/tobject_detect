@@ -8,6 +8,7 @@ import numpy as np
 from torchvision import transforms as T
 import json
 import torch
+from test_global import *
 
 class Detection1DataSet(data.Dataset):
     def __init__(self,root,label_dir,transforms=None,train=True,test=False):
@@ -57,29 +58,29 @@ class Detection1DataSet(data.Dataset):
         with open(json_path) as load_f:
             obj = json.load(load_f)
 
-        label0 = torch.zeros((13*13,4),dtype=torch.float32)
-        label1 = torch.zeros((13*13,1),dtype=torch.float32)
-        label2 = torch.zeros((13*13),dtype=torch.int64)
+        label0 = torch.zeros((CEL_NUMS * CEL_NUMS, 4), dtype=torch.float32)
+        label1 = torch.zeros((CEL_NUMS * CEL_NUMS, 1), dtype=torch.float32)
+        label2 = torch.zeros((CEL_NUMS * CEL_NUMS), dtype=torch.int64)
 
         for ob in obj:
-            classic = ob['classic']+1
+            classic = ob['classic']
             rect = ob['rect']
 
             rect_center = ((rect[0]+rect[2])/2,(rect[1]+rect[3])/2)
 
-            center_index_x = int(rect_center[0]/32)
-            center_index_y = int(rect_center[1]/32)
+            center_index_x = int(rect_center[0]/CEL_LEN)
+            center_index_y = int(rect_center[1]/CEL_LEN)
 
-            sub_x = rect_center[0] - 32*center_index_x
-            sub_y = rect_center[1] - 32*center_index_y
+            sub_x = rect_center[0] - CEL_LEN*center_index_x
+            sub_y = rect_center[1] - CEL_LEN*center_index_y
             width = rect[2] - rect[0]
             height = rect[3] - rect[1]
 
-            pos = center_index_y*13+center_index_x
-            label0[pos][0] = sub_x/32
-            label0[pos][1] = sub_y/32
-            label0[pos][2] = width/416
-            label0[pos][3] = height/416
+            pos = center_index_y*CEL_NUMS+center_index_x
+            label0[pos][0] = sub_x/CEL_LEN
+            label0[pos][1] = sub_y/CEL_LEN
+            label0[pos][2] = width/IMG_WIDTH
+            label0[pos][3] = height/IMG_HEIGHT
             label1[pos][0] = 1.0
 
             label2[pos] = classic
