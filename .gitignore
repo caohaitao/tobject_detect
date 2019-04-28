@@ -9,3 +9,8 @@
 /test4/imgs
 /testVOC/__pycache__
 /testVOC/imgs
+*.log
+*.pkl
+lr.txt
+imgs
+__pycache__
