@@ -158,13 +158,8 @@ def train():
     print(cnn)
 
 
-    # loss_func1 = torch.nn.MSELoss().cuda()
-    # loss_func1 = My_mse().cuda()
-    # loss_func2 = My_mse2().cuda()
-    # loss_func3 = torch.nn.CrossEntropyLoss().cuda()
-    # loss_func2 = torch.nn.CrossEntropyLoss().cuda()
-
     mse_l = torch.nn.MSELoss().cuda()
+    cross_entry_l = torch.nn.CrossEntropyLoss().cuda()
 
     break_flag = 0
 
@@ -179,6 +174,7 @@ def train():
         loss_meter_pos = meter.AverageValueMeter()
         loss_meter_body_c = meter.AverageValueMeter()
         loss_meter_nobody_c = meter.AverageValueMeter()
+        loss_meter_classic = meter.AverageValueMeter()
         previous_loss = 1e100
 
         train_dataloader = torch.utils.data.DataLoader(
@@ -201,6 +197,7 @@ def train():
             loss_meter_pos.reset()
             loss_meter_body_c.reset()
             loss_meter_nobody_c.reset()
+            loss_meter_classic.reset()
 
             # print("whole_step=%d"%len(train_dataloader))
             for ii,(data,label0,label1,label2) in enumerate(train_dataloader):
@@ -231,9 +228,11 @@ def train():
 
                 s0_view = scores[0].reshape(scores[0].size()[0]*scores[0].size()[1],scores[0].size()[2])
                 s1_view = scores[1].reshape(scores[1].size()[0]*scores[1].size()[1],scores[1].size()[2])
+                s2_view = scores[2].reshape(scores[2].size()[0]*scores[2].size()[1],scores[2].size()[2])
 
                 t0_select = torch.index_select(target0.cuda(),0,indicates.cuda())
                 s0_select = torch.index_select(s0_view.cuda(),0,indicates.cuda())
+
 
                 loss_body_pos = mse_l(s0_select,t0_select)
 
@@ -244,7 +243,11 @@ def train():
                 nobody_ious = torch.index_select(ious.cuda(),0,nonindicates.cuda())
                 nobody_ious_pred = torch.index_select(s1_view.cuda(),0,nonindicates.cuda())
                 loss_nobody_confidence = mse_l(nobody_ious_pred,nobody_ious)
-                loss = 5*loss_body_pos + loss_body_confidence+0.5*loss_nobody_confidence
+
+                body_classics = torch.index_select(target2.cuda(),0,indicates.cuda())
+                body_classics_pred = torch.index_select(s2_view.cuda(),0,indicates.cuda())
+                loss_classic = cross_entry_l(body_classics_pred,body_classics)
+                loss = 5*loss_body_pos + loss_body_confidence+0.5*loss_nobody_confidence+loss_classic
 
                 if ii%100==0 and ii!=0:
                     print("epoch(%d) step(%d) loss1(%0.6f) loss2(%0.6f) loss3(%0.6f) loss(%0.6f) percent(%0.6f)"%(
@@ -264,6 +267,7 @@ def train():
                 loss_meter_pos.add(loss_body_pos.detach().cpu().numpy())
                 loss_meter_body_c.add(loss_body_confidence.detach().cpu().numpy())
                 loss_meter_nobody_c.add(loss_nobody_confidence.detach().cpu().numpy())
+                loss_meter_classic.add(loss_classic.detach().cpu().numpy())
 
             # torch.save(cnn,pkl_name)
             # logger.info("save model(%s) success" % pkl_name)
@@ -276,8 +280,12 @@ def train():
             #           (epoch,loss_meter1.value()[0],loss_meter2.value()[0],loss_meter3.value()[0],loss_meter.value()[0],
             #            val_loss1,val_loss2,val_loss3,val_loss))
             # else:
-            logger.info("while(%d) epoch(%d) train_loss(%0.6f,%0.6f,%0.6f,%0.6f)"%
-                  (c,epoch,loss_meter_pos.value()[0],loss_meter_body_c.value()[0],loss_meter_nobody_c.value()[0],loss_meter.value()[0]))
+            logger.info("while(%d) epoch(%d) train_loss(%0.6f,%0.6f,%0.6f,%0.6f,%0.6f)"%
+                  (c,epoch,loss_meter_pos.value()[0],
+                   loss_meter_body_c.value()[0],
+                   loss_meter_nobody_c.value()[0],
+                   loss_meter_classic.value()[0],
+                   loss_meter.value()[0]))
 
             if loss_meter.value()[0]<0.03:
                 print("while(%d) epoch(%d) loss(%0.6f)<1 break"%(c,epoch,loss_meter.value()[0]))

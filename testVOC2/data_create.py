@@ -146,13 +146,13 @@ if __name__=='__main__':
     if not os.path.exists(label_foler):
         os.makedirs(label_foler)
 
-    voc_dir = r'E:\tensorflow_datas\voc\voc2007\JPEGImages'
+    voc_dir = r'F:\nn_img_data\voc\voc2007\JPEGImages'
     voc_pics = [os.path.join(voc_dir, img) for img in os.listdir(voc_dir)]
 
-    voc_anno_dir = r'E:\tensorflow_datas\voc\voc2007\Annotations'
+    voc_anno_dir = r'F:\nn_img_data\voc\voc2007\Annotations'
 
     # for i in range(len(voc_pics)):
-    for i in range(10):
+    for i in range(3000):
         create_simple_rect(voc_pics[i],voc_anno_dir,img_foler,label_foler,i)
 
 
