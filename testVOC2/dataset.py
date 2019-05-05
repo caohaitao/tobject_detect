@@ -20,12 +20,12 @@ class Detection1DataSet(data.Dataset):
 
         imgs_num = len(imgs)
 
-        np.random.seed(100)
+        np.random.seed(124)
 
         if train == True:
-            self.imgs = imgs[0:int(0.7*imgs_num)]
+            self.imgs = imgs[0:int(0.8*imgs_num)]
         else:
-            self.imgs = imgs[int(0.7*imgs_num):]
+            self.imgs = imgs[int(0.8*imgs_num):]
 
         if nums<len(self.imgs):
             self.imgs = random.sample(self.imgs,nums)
@@ -45,6 +45,7 @@ class Detection1DataSet(data.Dataset):
                 # 训练集需要数据增强
             else:
                 self.transforms = T.Compose([
+                    T.ColorJitter(brightness=0.75,contrast=0.75,saturation=0.75,hue=0.35),
                     T.ToTensor(),
                     normalize
                 ])

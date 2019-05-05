@@ -11,16 +11,16 @@ from log import *
 from test_global import *
 
 
-pkl_name = "detection3.pkl"
-EPOCH = 128
-BATCH_SIZE = 4
-default_lr = 0.0001
+pkl_name = "detection_small.pkl"
+EPOCH = 16
+BATCH_SIZE = 16
+default_lr = 0.00001
 
 
 # 输出的通道数目，分别是∆x,∆y,w,h,c+5个分类
 out_channel = 5+CLASSIC_NUMS
 
-cfg = [64, 'M', 128,128, 'M', 256,256,256,256,256, 'M', 512,512,512,512,512, 'M', 1024,1024,1024,1024, 'M',512,256]
+cfg = [64, 'M', 128, 'M', 256,256,256, 'M', 512,512,512, 'M', 1024,1024, 'M',512]
 # cfg = [64, 'M', 128,128, 'M', 256,256,256, 'M', 512,512,512, 'M',256]
 
 
@@ -148,6 +148,7 @@ def get_rect_by_value(target,ind):
     return [int(center_x-width/2),int(center_y-height/2),int(center_x+width/2),int(center_y+height/2)]
 
 def train():
+    print()
     if os.path.exists(pkl_name):
         cnn = torch.load(pkl_name).cuda()
         logger.info("load model(%s) success" % pkl_name)
@@ -163,13 +164,14 @@ def train():
 
     break_flag = 0
 
+    lr = get_lr()
+    optimizer = torch.optim.Adam(cnn.parameters(), lr=lr)
+
     for c in range(1000):
         print("while(%d) begin"%c)
-        train_data = Detection1DataSet('imgs\\imgs', 'imgs\\labels', nums=100, train=True)
+        train_data = Detection1DataSet('imgs\\imgs', 'imgs\\labels', nums=3000, train=True)
         # val_data = Detection1DataSet('imgs\\imgs', 'imgs\\labels', train=False)
 
-        lr = get_lr()
-        optimizer = torch.optim.Adam(cnn.parameters(), lr=lr)
         loss_meter = meter.AverageValueMeter()
         loss_meter_pos = meter.AverageValueMeter()
         loss_meter_body_c = meter.AverageValueMeter()
@@ -287,7 +289,7 @@ def train():
                    loss_meter_classic.value()[0],
                    loss_meter.value()[0]))
 
-            if loss_meter.value()[0]<0.03:
+            if loss_meter.value()[0]<0.01:
                 print("while(%d) epoch(%d) loss(%0.6f)<1 break"%(c,epoch,loss_meter.value()[0]))
                 if epoch==0:
                     break_flag += 1
@@ -295,6 +297,7 @@ def train():
                 break
 
             break_flag = 0
+
 
             # if loss_meter.value()[0] > previous_loss:
             #     logger.info("lr change from %0.7f -> %0.7f"%(lr,lr*0.95))

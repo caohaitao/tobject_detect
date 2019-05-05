@@ -11,7 +11,7 @@ from log import *
 
 
 pkl_name = "detection3.pkl"
-EPOCH = 32
+EPOCH = 16
 BATCH_SIZE = 8
 default_lr = 0.001
 

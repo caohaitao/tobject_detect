@@ -14,6 +14,7 @@ import torch
 from test_global import *
 from xml.dom.minidom import parse
 import xml.dom.minidom
+from torchvision import transforms as T
 
 class classic_data:
     def __init__(self,index,color,label):
@@ -137,23 +138,37 @@ class My_loss(torch.nn.Module):
         a = (z==1).float()*(x-y)
         return torch.mean(torch.pow(a, 2))
 
+class TransFormTest():
+    for (root, dirs, files) in os.walk('imgs\\imgs'):
+        for item in files:
+            d = os.path.join(root, item)
+            img = Image.open(d)
+
+            img = T.ColorJitter(brightness=0.5,contrast=0.5,saturation=0.5,hue=0.25)(img)
+            img = np.array(img)
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
+            cv2.imshow('test', img)
+            cv2.waitKey(0)
+
 if __name__=='__main__':
-    img_foler = 'imgs\\imgs'
-    label_foler = 'imgs\\labels'
-    if not os.path.exists(img_foler):
-        os.makedirs(img_foler)
-
-    if not os.path.exists(label_foler):
-        os.makedirs(label_foler)
-
-    voc_dir = r'F:\nn_img_data\voc\voc2007\JPEGImages'
-    voc_pics = [os.path.join(voc_dir, img) for img in os.listdir(voc_dir)]
-
-    voc_anno_dir = r'F:\nn_img_data\voc\voc2007\Annotations'
-
-    # for i in range(len(voc_pics)):
-    for i in range(3000):
-        create_simple_rect(voc_pics[i],voc_anno_dir,img_foler,label_foler,i)
+    TransFormTest()
+    # img_foler = 'imgs\\imgs'
+    # label_foler = 'imgs\\labels'
+    # if not os.path.exists(img_foler):
+    #     os.makedirs(img_foler)
+    #
+    # if not os.path.exists(label_foler):
+    #     os.makedirs(label_foler)
+    #
+    # voc_dir = r'F:\nn_img_data\voc\voc2007\JPEGImages'
+    # voc_pics = [os.path.join(voc_dir, img) for img in os.listdir(voc_dir)]
+    #
+    # voc_anno_dir = r'F:\nn_img_data\voc\voc2007\Annotations'
+    #
+    # # for i in range(len(voc_pics)):
+    # for i in range(8000):
+    #     create_simple_rect(voc_pics[i],voc_anno_dir,img_foler,label_foler,i)
 
 
     # data_show(img_foler,label_foler)

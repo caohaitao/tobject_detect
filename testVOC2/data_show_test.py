@@ -37,6 +37,7 @@ def draw_by_one_data(pic_path,rect_datas):
         i = rd[0]
         data1 = rd[1]
         data2 = rd[2]
+        confidence = rd[3]
         index_x = int(i % CEL_NUMS)
         index_y = int(i / CEL_NUMS)
         sub_x = data1[0] * CEL_LEN
@@ -60,8 +61,8 @@ def draw_by_one_data(pic_path,rect_datas):
         if index == -1:
             draw.text((rect[0], rect[1]), 'unknown', fill=(255, 0, 0))
         else:
-            t = classics[index]
-            draw.text((rect[0],rect[1]),t,fill=(255,0,0))
+            rect_str = format("%s(%0.3f)"%(classics[index],confidence))
+            draw.text((rect[0],rect[1]),rect_str,fill=(255,0,0))
 
     img = np.array(img)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
@@ -73,8 +74,8 @@ def draw_by_one_data(pic_path,rect_datas):
 def cac_one_pic_and_save():
     root = r"imgs\imgs"
     pic_paths = [os.path.join(root,img) for img in os.listdir(root)]
-    # pic_paths = pic_paths[int(0.7*len(pic_paths)):]
-    pic_paths = pic_paths[:int(0.7 * len(pic_paths))]
+    # pic_paths = pic_paths[int(0.8*len(pic_paths)):]
+    pic_paths = pic_paths[:int(0.8 * len(pic_paths))]
     random.shuffle(pic_paths)
 
     if not os.path.exists(pkl_name):
@@ -93,9 +94,9 @@ def cac_one_pic_and_save():
             data1 = results[0][i]
             data2 = results[1][i]
             ds.append(data1[4])
-            if (data1[4]<0.6):
+            if (data1[4]<0.4):
                 continue
-            rect_datas.append([i,data1,data2])
+            rect_datas.append([i,data1,data2,data1[4]])
         print(max(ds))
         draw_by_one_data(pic_path,rect_datas)
         pass
